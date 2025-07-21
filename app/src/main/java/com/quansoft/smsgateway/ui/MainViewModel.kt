@@ -10,6 +10,7 @@ import com.quansoft.smsgateway.data.AppDatabase
 import com.quansoft.smsgateway.data.SettingsManager
 import com.quansoft.smsgateway.data.SmsMessageUiItem
 import com.quansoft.smsgateway.util.ContactsUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import java.math.BigInteger
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -63,7 +65,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = SettingsManager.DEFAULT_PORT
         )
 
-    val ipAddress: StateFlow<String> = flow {
+    val ipAddress: Flow<String> = flow {
         val wifiManager = application.getSystemService(Context.WIFI_SERVICE) as WifiManager
         var ipAddress = wifiManager.connectionInfo.ipAddress
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
@@ -71,7 +73,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val ipByteArray = BigInteger.valueOf(ipAddress.toLong()).toByteArray()
         try {
-            val ip = InetAddress.getByAddress(ipByteArray).hostAddress
+            val ip = withContext(Dispatchers.IO) {
+                InetAddress.getByAddress(ipByteArray)
+            }.hostAddress
             emit(ip ?: "N/A")
         } catch (ex: UnknownHostException) {
             emit("Error")
