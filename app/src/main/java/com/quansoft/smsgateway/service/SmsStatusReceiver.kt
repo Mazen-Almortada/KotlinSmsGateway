@@ -15,6 +15,7 @@ class SmsStatusReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val smsDao = AppDatabase.getDatabase(context).smsDao()
+
         val messageId = intent.getStringExtra("id") ?: return
 
         val newStatus = when (intent.action) {

@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.quansoft.smsgateway.R
 import com.quansoft.smsgateway.data.AppDatabase
+import com.quansoft.smsgateway.data.SettingsManager
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class GatewayService : Service() {
@@ -29,6 +31,7 @@ class GatewayService : Service() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private val database by lazy { AppDatabase.getDatabase(this) }
+    private val settingsManager by lazy { SettingsManager(this) }
 
     private val smsStatusReceiver = SmsStatusReceiver()
 
@@ -41,17 +44,16 @@ class GatewayService : Service() {
         }
     }
 
-    private val ktorServer by lazy {
-        embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
-            configureRouting(database.smsDao())
-        }
-    }
+    private var ktorServer: io.ktor.server.engine.ApplicationEngine? = null
 
     override fun onCreate() {
         super.onCreate()
         startForegroundService()
         scope.launch {
-            ktorServer.start(wait = false)
+            val port = settingsManager.serverPortFlow.first()
+            ktorServer = embeddedServer(Netty, port = port, host = "0.0.0.0") {
+                configureRouting(database.smsDao())
+            }.start(wait = false)
         }
         scope.launch {
             processSmsQueue()
@@ -87,27 +89,28 @@ class GatewayService : Service() {
     private fun sendSms(id: String, phone: String, message: String) {
 
 
-        // إنشاء Intent للإرسال يستهدف الـ BroadcastReceiver المركزي
-        val sentIntent = Intent(this, SmsStatusReceiver::class.java).apply {
-            action = "SMS_SENT"
+        val sentIntent = Intent("SMS_SENT").apply {
+            `package` = this@GatewayService.packageName
             putExtra("id", id)
         }
         val sentPendingIntent = PendingIntent.getBroadcast(
-            this, id.hashCode(), sentIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            this,
+            id.hashCode(),
+            sentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // إنشاء Intent للتسليم يستهدف الـ BroadcastReceiver المركزي
-        val deliveredIntent = Intent(this, SmsStatusReceiver::class.java).apply {
-            action = "SMS_DELIVERED"
+        val deliveredIntent = Intent("SMS_DELIVERED").apply {
+            `package` = this@GatewayService.packageName
             putExtra("id", id)
         }
         val deliveredPendingIntent = PendingIntent.getBroadcast(
-            this, (id.hashCode() + 1), deliveredIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            this,
+            (id.hashCode() + 1),
+            deliveredIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // إرسال الرسالة
         smsManager.sendTextMessage(phone, null, message, sentPendingIntent, deliveredPendingIntent)
     }
 
@@ -129,7 +132,7 @@ class GatewayService : Service() {
         val notification: Notification = notificationBuilder.setOngoing(true)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("SMS Gateway Running")
-            .setContentText("The server is active on port 8080")
+            .setContentText("The server is active and listening for requests.")
             .setPriority(NotificationManager.IMPORTANCE_HIGH)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
@@ -138,7 +141,7 @@ class GatewayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        ktorServer.stop(1000, 2000)
+        ktorServer?.stop(1000, 2000) // <-- إيقاف الخادم بأمان
         job.cancel()
         scope.cancel()
         unregisterReceiver(smsStatusReceiver)
