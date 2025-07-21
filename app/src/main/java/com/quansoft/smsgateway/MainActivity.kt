@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,41 +19,62 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.quansoft.smsgateway.data.SmsMessage
+import com.quansoft.smsgateway.data.SmsMessageUiItem
 import com.quansoft.smsgateway.service.GatewayService
 import com.quansoft.smsgateway.ui.MainViewModel
 import com.quansoft.smsgateway.ui.settings.SettingsScreen
-import com.quansoft.smsgateway.ui.theme.KotlinSmsGatewayTheme
+import com.quansoft.smsgateway.ui.theme.Theme
+import com.quansoft.smsgateway.ui.theme.StatusDelivered
+import com.quansoft.smsgateway.ui.theme.StatusFailed
+import com.quansoft.smsgateway.ui.theme.StatusQueued
+import com.quansoft.smsgateway.ui.theme.StatusSending
+import com.quansoft.smsgateway.ui.theme.StatusSent
 
 class MainActivity : ComponentActivity() {
 
@@ -73,16 +95,19 @@ class MainActivity : ComponentActivity() {
             requestPermissions.launch(
                 arrayOf(
                     Manifest.permission.SEND_SMS,
+                    Manifest.permission.READ_CONTACTS,
                     Manifest.permission.POST_NOTIFICATIONS
                 )
             )
         } else {
-            requestPermissions.launch(arrayOf(Manifest.permission.SEND_SMS))
+            requestPermissions.launch( arrayOf(
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_CONTACTS,
+            ))
         }
 
         setContent {
-            KotlinSmsGatewayTheme {
-                // إعداد نظام التنقل
+            Theme {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "gateway") {
                     composable("gateway") {
@@ -108,15 +133,10 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GatewayScreen(
-    viewModel: MainViewModel,
-    navController: NavController
-) {
-    val messages by viewModel.filteredMessages.collectAsState()
+fun GatewayScreen(viewModel: MainViewModel, navController: NavController) {
     val ipAddress by viewModel.ipAddress.collectAsState()
     val deviceToken by viewModel.deviceToken.collectAsState()
     val serverPort by viewModel.serverPort.collectAsState()
-
     val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
@@ -127,7 +147,7 @@ fun GatewayScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
                 ),
-                actions = { // <-- إضافة أيقونة الإعدادات هنا
+                actions = {
                     IconButton(onClick = { navController.navigate("settings") }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -142,62 +162,58 @@ fun GatewayScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
         ) {
+            Spacer(Modifier.height(16.dp))
             val serverUrl = "http://$ipAddress:$serverPort"
             InfoCard(
-                title = "Server IP Address",
+                title = "Server URL",
                 content = serverUrl,
+                icon = Icons.Default.Home,
                 onCopy = { clipboardManager.setText(AnnotatedString(serverUrl)) }
             )
             Spacer(Modifier.height(8.dp))
             InfoCard(
                 title = "Authorization Token",
                 content = deviceToken,
+                icon = Icons.Default.Lock,
                 isMonospace = true,
                 onCopy = { clipboardManager.setText(AnnotatedString(deviceToken)) }
             )
             Spacer(Modifier.height(16.dp))
-            Text("Messages Log", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            MessageList(messages = messages)
-        }
-    }
-}
-
-
-@Composable
-fun MessageList(messages: List<SmsMessage>) {
-    if (messages.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No messages yet.")
-        }
-    } else {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(messages, key = { it.id }) { message ->
-                MessageItem(message)
-            }
+            MessageLogSection(viewModel = viewModel)
         }
     }
 }
 
 @Composable
-fun MessageItem(message: SmsMessage) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("To: ${message.recipient}", style = MaterialTheme.typography.bodyLarge)
-                Text(message.content, style = MaterialTheme.typography.bodySmall, maxLines = 2)
-            }
-            Spacer(Modifier.width(8.dp))
-            StatusChip(status = message.status)
+fun MessageLogSection(viewModel: MainViewModel) {
+    val tabs = listOf("All", "Queued", "Sending", "Sent", "Delivered", "Failed")
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val messages by viewModel.filteredMessages.collectAsState()
+
+    LaunchedEffect(selectedTabIndex) {
+        val status = if (tabs[selectedTabIndex] == "All") {
+            null
+        } else {
+            tabs[selectedTabIndex].lowercase()
         }
+        viewModel.selectStatus(status)
+    }
+
+    Column {
+        Text("Messages Log", style = MaterialTheme.typography.titleLarge)
+        TabRow(selectedTabIndex = selectedTabIndex) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        MessageList(messages = messages)
     }
 }
 
@@ -205,14 +221,21 @@ fun MessageItem(message: SmsMessage) {
 fun InfoCard(
     title: String,
     content: String,
+    icon: ImageVector,
     isMonospace: Boolean = false,
     onCopy: (() -> Unit)? = null
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp).padding(end = 16.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -223,10 +246,9 @@ fun InfoCard(
                 )
             }
             if (onCopy != null) {
-                Spacer(Modifier.width(8.dp))
                 IconButton(onClick = onCopy) {
                     Icon(
-                        imageVector = Icons.Default.Done,
+                        imageVector = Icons.Rounded.Check,
                         contentDescription = "Copy"
                     )
                 }
@@ -236,19 +258,110 @@ fun InfoCard(
 }
 
 @Composable
+fun MessageList(messages: List<SmsMessageUiItem>) {
+    if (messages.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "No Messages",
+                    modifier = Modifier.size(64.dp),
+                    tint = Color.Gray
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "No messages in this category",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "Messages matching this status will appear here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = Color.Gray
+                )
+            }
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(messages, key = { it.message.id }) { message ->
+                MessageItem(message)
+            }
+        }
+    }
+}
+
+@Composable
+fun MessageItem(item: SmsMessageUiItem) {
+    val message = item.message
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "To: ${message.recipient}",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace)
+                )
+                Text(
+                    "To: ${item.contactName ?: "لايوجد اسم"}",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace)
+                )
+                Text(
+                    formatTimestamp(message.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(message.content, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+            Spacer(Modifier.height(8.dp))
+            StatusChip(status = message.status)
+        }
+    }
+}
+
+@Composable
 fun StatusChip(status: String) {
-    val color = when (status) {
-        "sent" -> Color(0xFFB3E5FC)
-        "delivered" -> Color(0xFFC8E6C9)
-        "failed" -> Color(0xFFFFCDD2)
-        "sending" -> Color(0xFFFFE0B2)
-        else -> Color(0xFFF5F5F5)
+    val (color, icon) = when (status) {
+        "sent" -> StatusSent to Icons.AutoMirrored.Filled.Send
+        "delivered" -> StatusDelivered to Icons.Default.CheckCircle
+        "failed" -> StatusFailed to Icons.Default.Warning
+        "sending" -> StatusSending to Icons.AutoMirrored.Default.Send
+        else -> StatusQueued to Icons.Default.DateRange
     }
-    Surface(shape = MaterialTheme.shapes.small, color = color) {
-        Text(
-            text = status,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
+
+    AssistChip(
+        onClick = { /* Do nothing */ },
+        label = { Text(status.replaceFirstChar { it.uppercase() }) },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = status,
+                modifier = Modifier.size(AssistChipDefaults.IconSize)
+            )
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = color,
+            labelColor = Color.Black,
+            leadingIconContentColor = Color.Black
+        ),
+        border = null
+    )
+}
+
+@Composable
+private fun formatTimestamp(timestamp: Long): String {
+    return DateUtils.getRelativeTimeSpanString(
+        timestamp,
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS
+    ).toString()
 }
