@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.ui
+package com.quansoft.smsgateway.ui
 
 import android.app.Application
 import android.content.Context
@@ -6,7 +6,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.kotlinsmsgateway.data.AppDatabase
+import com.quansoft.smsgateway.data.AppDatabase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow

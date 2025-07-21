@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.data
+package com.quansoft.smsgateway.data
 
 import android.content.Context
 import androidx.room.Database

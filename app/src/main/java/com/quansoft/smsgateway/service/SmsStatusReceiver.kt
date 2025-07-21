@@ -1,10 +1,10 @@
-package com.example.kotlinsmsgateway.service
+package com.quansoft.smsgateway.service
 
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.example.kotlinsmsgateway.data.AppDatabase
+import com.quansoft.smsgateway.data.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

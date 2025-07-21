@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.kotlinsmsgateway"
+    namespace = "com.quansoft.smsgateway"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.kotlinsmsgateway"
+        applicationId = "com.quansoft.smsgateway"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway
+package com.quansoft.smsgateway
 
 import org.junit.Test
 

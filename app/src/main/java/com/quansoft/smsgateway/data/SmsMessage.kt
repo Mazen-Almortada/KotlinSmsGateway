@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.data
+package com.quansoft.smsgateway.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

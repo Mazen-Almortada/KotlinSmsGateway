@@ -1,8 +1,8 @@
-package com.example.kotlinsmsgateway.service
+package com.quansoft.smsgateway.service
 
 import android.os.Build
-import com.example.kotlinsmsgateway.data.SmsDao
-import com.example.kotlinsmsgateway.data.SmsMessage
+import com.quansoft.smsgateway.data.SmsDao
+import com.quansoft.smsgateway.data.SmsMessage
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call

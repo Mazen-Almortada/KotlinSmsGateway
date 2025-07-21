@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway
+package com.quansoft.smsgateway
 
 import android.Manifest
 import android.content.Intent
@@ -19,10 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.example.kotlinsmsgateway.data.SmsMessage
-import com.example.kotlinsmsgateway.service.GatewayService
-import com.example.kotlinsmsgateway.ui.MainViewModel
-import com.example.kotlinsmsgateway.ui.theme.KotlinSmsGatewayTheme
+import com.quansoft.smsgateway.data.SmsMessage
+import com.quansoft.smsgateway.service.GatewayService
+import com.quansoft.smsgateway.ui.MainViewModel
+import com.quansoft.smsgateway.ui.theme.KotlinSmsGatewayTheme
 
 class MainActivity : ComponentActivity() {
 

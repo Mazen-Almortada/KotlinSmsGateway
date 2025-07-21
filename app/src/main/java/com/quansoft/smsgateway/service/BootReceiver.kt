@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.service
+package com.quansoft.smsgateway.service
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.ui.theme
+package com.quansoft.smsgateway.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

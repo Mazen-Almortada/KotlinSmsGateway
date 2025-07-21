@@ -1,4 +1,4 @@
-package com.example.kotlinsmsgateway.service
+package com.quansoft.smsgateway.service
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -13,8 +13,8 @@ import android.os.IBinder
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.example.kotlinsmsgateway.R
-import com.example.kotlinsmsgateway.data.AppDatabase
+import com.quansoft.smsgateway.R
+import com.quansoft.smsgateway.data.AppDatabase
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CoroutineScope
