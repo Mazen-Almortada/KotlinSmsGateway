@@ -12,7 +12,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.quansoft.smsgateway"
+            applicationId = "com.quansoft.smsgateway"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -67,7 +67,11 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
 
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
+
+    
     val ktorVersion = "2.3.12"
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")

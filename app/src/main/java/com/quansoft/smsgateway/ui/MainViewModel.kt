@@ -7,8 +7,12 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.quansoft.smsgateway.data.AppDatabase
+import com.quansoft.smsgateway.data.SettingsManager
+import com.quansoft.smsgateway.data.SmsMessage
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import java.math.BigInteger
@@ -19,9 +23,32 @@ import java.nio.ByteOrder
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val smsDao = AppDatabase.getDatabase(application).smsDao()
+    private val settingsManager = SettingsManager(application)
 
-    val messages = smsDao.getAllMessages()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val allMessages = smsDao.getAllMessages()
+
+    private val _selectedStatus = MutableStateFlow<String?>(null)
+
+    val filteredMessages: StateFlow<List<SmsMessage>> =
+        combine(allMessages, _selectedStatus) { messages, status ->
+            if (status == null) {
+                messages
+            } else {
+                messages.filter { it.status == status }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun selectStatus(status: String?) {
+        _selectedStatus.value = status
+    }
+
+
+    val serverPort: StateFlow<Int> = settingsManager.serverPortFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = SettingsManager.DEFAULT_PORT
+        )
 
     val ipAddress: StateFlow<String> = flow {
         val wifiManager = application.getSystemService(Context.WIFI_SERVICE) as WifiManager
@@ -40,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
     val deviceToken: StateFlow<String> = flow {
-        val token = "${Build.BOARD}-${Build.ID}-${Build.SERIAL}-${Build.BOOTLOADER}"
+        val token = "${Build.BOARD}-${Build.ID}-${Build.BOOTLOADER}"
         emit(token)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, "Loading...")
 }

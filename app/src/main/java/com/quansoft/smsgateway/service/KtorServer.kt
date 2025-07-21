@@ -1,6 +1,7 @@
 package com.quansoft.smsgateway.service
 
 import android.os.Build
+import android.util.Log
 import com.quansoft.smsgateway.data.SmsDao
 import com.quansoft.smsgateway.data.SmsMessage
 import io.ktor.http.HttpStatusCode
@@ -22,6 +23,7 @@ import java.util.UUID
 @Serializable
 data class SendRequest(val to: String?, val message: String?, val messageID: String? )
 
+private const val TAG = "KtorServer"
 fun Application.configureRouting(smsDao: SmsDao) {
 
 
@@ -41,6 +43,7 @@ fun Application.configureRouting(smsDao: SmsDao) {
 
 
         fun isAuthorized(authHeader: String?): Boolean {
+            Log.d(TAG, "isAuthorized: ${authHeader} ${deviceToken}")
             return authHeader == deviceToken
         }
 
