@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
 import java.util.UUID
 
 @Serializable
-data class SendRequest(val to: String?, val message: String?)
+data class SendRequest(val to: String?, val message: String?, val messageID: String? )
 
 fun Application.configureRouting(smsDao: SmsDao) {
 
@@ -35,7 +35,8 @@ fun Application.configureRouting(smsDao: SmsDao) {
 
     routing {
         val deviceToken by lazy {
-            "${Build.BOARD}-${Build.ID}-${Build.SERIAL}-${Build.BOOTLOADER}"
+
+            "${Build.BOARD}-${Build.ID}-${Build.BOOTLOADER}"
         }
 
 
@@ -61,6 +62,10 @@ fun Application.configureRouting(smsDao: SmsDao) {
             val request = call.receive<SendRequest>()
             val to = request.to
             val messageContent = request.message
+            var uid = request.messageID
+            if (uid == null){
+                uid = UUID.randomUUID().toString()
+            }
 
             if (to.isNullOrBlank() || messageContent.isNullOrBlank()) {
                 call.respond(HttpStatusCode.BadRequest, "Missing 'to' or 'message' parameter.")
@@ -68,7 +73,7 @@ fun Application.configureRouting(smsDao: SmsDao) {
             }
 
             val message = SmsMessage(
-                id = UUID.randomUUID().toString(),
+                id = uid,
                 recipient = to,
                 content = messageContent,
                 status = "queued",

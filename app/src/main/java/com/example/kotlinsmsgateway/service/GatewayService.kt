@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.IBinder
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.kotlinsmsgateway.R
 import com.example.kotlinsmsgateway.data.AppDatabase
 import io.ktor.server.engine.embeddedServer
@@ -31,6 +32,9 @@ class GatewayService : Service() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private val database by lazy { AppDatabase.getDatabase(this) }
+
+    private val smsStatusReceiver = SmsStatusReceiver()
+
     private val smsManager: SmsManager by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             applicationContext.getSystemService(SmsManager::class.java)
@@ -55,6 +59,13 @@ class GatewayService : Service() {
         scope.launch {
             processSmsQueue()
         }
+
+        val intentFilter = IntentFilter().apply {
+            addAction("SMS_SENT")
+            addAction("SMS_DELIVERED")
+        }
+        ContextCompat.registerReceiver(this, smsStatusReceiver, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+
     }
 
 
@@ -77,45 +88,30 @@ class GatewayService : Service() {
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun sendSms(id: String, phone: String, message: String) {
-        val sentIntent = PendingIntent.getBroadcast(
-            this, id.hashCode(), Intent("SMS_SENT").putExtra("id", id),
+
+
+        // إنشاء Intent للإرسال يستهدف الـ BroadcastReceiver المركزي
+        val sentIntent = Intent(this, SmsStatusReceiver::class.java).apply {
+            action = "SMS_SENT"
+            putExtra("id", id)
+        }
+        val sentPendingIntent = PendingIntent.getBroadcast(
+            this, id.hashCode(), sentIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        val deliveredIntent = PendingIntent.getBroadcast(
-            this, (id.hashCode() + 1), Intent("SMS_DELIVERED").putExtra("id", id),
+
+        // إنشاء Intent للتسليم يستهدف الـ BroadcastReceiver المركزي
+        val deliveredIntent = Intent(this, SmsStatusReceiver::class.java).apply {
+            action = "SMS_DELIVERED"
+            putExtra("id", id)
+        }
+        val deliveredPendingIntent = PendingIntent.getBroadcast(
+            this, (id.hashCode() + 1), deliveredIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val sentReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                scope.launch {
-                    val newStatus = if (resultCode == RESULT_OK) "sent" else "failed"
-                    database.smsDao().updateStatus(id, newStatus)
-                }
-                try { unregisterReceiver(this) } catch (_: Exception) {}
-            }
-        }
-
-        val deliveredReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                scope.launch {
-                    val newStatus = if (resultCode == RESULT_OK) "delivered" else "failed"
-                    database.smsDao().updateStatus(id, newStatus)
-                }
-                try { unregisterReceiver(this) } catch (_: Exception) {}
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerReceiver(sentReceiver, IntentFilter("SMS_SENT"), RECEIVER_EXPORTED)
-            registerReceiver(deliveredReceiver, IntentFilter("SMS_DELIVERED"), RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(sentReceiver, IntentFilter("SMS_SENT"))
-            registerReceiver(deliveredReceiver, IntentFilter("SMS_DELIVERED"))
-        }
-
-
-        smsManager.sendTextMessage(phone, null, message, sentIntent, deliveredIntent)
+        // إرسال الرسالة
+        smsManager.sendTextMessage(phone, null, message, sentPendingIntent, deliveredPendingIntent)
     }
 
 
@@ -148,6 +144,7 @@ class GatewayService : Service() {
         ktorServer.stop(1000, 2000)
         job.cancel()
         scope.cancel()
+        unregisterReceiver(smsStatusReceiver)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
