@@ -82,6 +82,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.protolite.well.known.types)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.play.services.location)

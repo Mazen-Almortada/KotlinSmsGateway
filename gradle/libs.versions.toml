@@ -14,6 +14,7 @@ lifecycleViewmodelCompose = "2.9.2"
 navigationCompose = "2.9.2"
 roomVersion = "2.7.2"
 playServicesLocation = "21.3.0"
+protoliteWellKnownTypes = "18.0.1"
 
 
 [libraries]
@@ -43,6 +44,7 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktorVersion" }
 ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktorVersion" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
+protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

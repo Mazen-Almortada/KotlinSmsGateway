@@ -6,5 +6,6 @@ package com.quansoft.smsgateway.data
  */
 data class SmsMessageUiItem(
     val message: SmsMessage,
-    val contactName: String?
+    val contactName: String?,
+    val bulkName: String? // Added the campaign name field
 )

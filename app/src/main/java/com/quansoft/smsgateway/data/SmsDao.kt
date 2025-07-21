@@ -1,6 +1,7 @@
 package com.quansoft.smsgateway.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -22,4 +23,16 @@ interface SmsDao {
 
     @Query("DELETE FROM sms_messages WHERE status = 'queued'")
     suspend fun clearQueuedMessages()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(messages: List<SmsMessage>)
+
+    @Delete
+    suspend fun delete(message: SmsMessage)
+
+    @Query("SELECT * FROM bulk_campaigns ORDER BY name ASC")
+    fun getAllCampaigns(): Flow<List<BulkCampaign>>
+
+    @Query("DELETE FROM sms_messages WHERE bulkId = :bulkId")
+    suspend fun deleteMessagesByBulkId(bulkId: String)
 }

@@ -1,90 +1,100 @@
 package com.quansoft.smsgateway.ui
 
 import android.app.Application
-import android.content.Context
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.quansoft.smsgateway.data.AppDatabase
-import com.quansoft.smsgateway.data.SettingsManager
+import com.quansoft.smsgateway.data.BulkCampaign
 import com.quansoft.smsgateway.data.SmsMessageUiItem
 import com.quansoft.smsgateway.util.ContactsUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
-import java.math.BigInteger
-import java.net.InetAddress
-import java.net.UnknownHostException
-import java.nio.ByteOrder
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val smsDao = AppDatabase.getDatabase(application).smsDao()
-    private val settingsManager = SettingsManager(application)
+    private val bulkCampaignDao = AppDatabase.getDatabase(application).bulkCampaignDao()
 
-    // A flow that maps database messages to UI items with resolved contact names.
-    // This runs on a background thread provided by Room.
-    private val allMessagesWithContactNames: Flow<List<SmsMessageUiItem>> = smsDao.getAllMessages()
-        .map { messages ->
+    // This is the correct way: Combine the two flows.
+    private val allMessagesWithDetails: Flow<List<SmsMessageUiItem>> =
+        combine(smsDao.getAllMessages(), smsDao.getAllCampaigns()) { messages, campaigns ->
+            // 1. Create a fast lookup map from campaign ID to campaign name.
+            val campaignMap = campaigns.associateBy { it.id }
+
+            // 2. Map each message to its UI item.
             messages.map { message ->
                 val contactName = ContactsUtil.findContactName(application, message.recipient)
-                SmsMessageUiItem(message = message, contactName = contactName)
+                // 3. Use the map to find the campaign name instantly (not a DB call).
+                val campaignName = message.bulkId?.let { campaignMap[it]?.name }
+                SmsMessageUiItem(
+                    message = message,
+                    contactName = contactName,
+                    bulkName = campaignName
+                )
             }
         }
 
-    // Holds the currently selected status filter. A null value means "All".
+    // Flow for the list of campaigns to show in the dropdown
+    val campaigns: StateFlow<List<BulkCampaign>> = bulkCampaignDao.getAllCampaigns()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // State for the status filter (e.g., "sent", "failed")
     private val _selectedStatus = MutableStateFlow<String?>(null)
 
-    // A derived flow that emits a filtered list of messages based on the selected status.
+    // State for the campaign filter
+    private val _selectedCampaignId = MutableStateFlow<String?>(null)
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    // The final list of messages, filtered by both status and campaign
     val filteredMessages: StateFlow<List<SmsMessageUiItem>> =
-        combine(allMessagesWithContactNames, _selectedStatus) { messages, status ->
-            if (status == null) {
-                messages
-            } else {
-                messages.filter { it.message.status == status }
+        combine(
+            allMessagesWithDetails,
+            _selectedStatus,
+            _selectedCampaignId,
+            _searchQuery
+        ) { messages, status, campaignId, query ->
+            messages.filter { item ->
+                val statusMatch = status == null || item.message.status == status
+                val campaignMatch = campaignId == null || item.message.bulkId == campaignId
+                val searchMatch = query.isBlank() ||
+                        item.message.recipient.contains(query, ignoreCase = true) ||
+                        (item.contactName?.contains(query, ignoreCase = true) == true)
+                statusMatch && campaignMatch && searchMatch
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Updates the active status filter, triggering the filteredMessages flow to re-evaluate.
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun deleteMessage(item: SmsMessageUiItem) {
+        viewModelScope.launch {
+            smsDao.delete(item.message)
+        }
+    }
+
+    fun deleteCampaign(campaign: BulkCampaign) {
+        viewModelScope.launch {
+            // First, delete all messages associated with the campaign
+            smsDao.deleteMessagesByBulkId(campaign.id)
+            // Then, delete the campaign itself
+            bulkCampaignDao.delete(campaign)
+        }
+    }
+
     fun selectStatus(status: String?) {
         _selectedStatus.value = status
     }
 
-    val serverPort: StateFlow<Int> = settingsManager.serverPortFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = SettingsManager.DEFAULT_PORT
-        )
-
-    val ipAddress: Flow<String> = flow {
-        val wifiManager = application.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        var ipAddress = wifiManager.connectionInfo.ipAddress
-        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-            ipAddress = Integer.reverseBytes(ipAddress)
-        }
-        val ipByteArray = BigInteger.valueOf(ipAddress.toLong()).toByteArray()
-        try {
-            val ip = withContext(Dispatchers.IO) {
-                InetAddress.getByAddress(ipByteArray)
-            }.hostAddress
-            emit(ip ?: "N/A")
-        } catch (ex: UnknownHostException) {
-            emit("Error")
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, "Loading...")
-
-
-    val deviceToken: StateFlow<String> = flow {
-        val token = "${Build.BOARD}-${Build.ID}-${Build.BOOTLOADER}"
-        emit(token)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, "Loading...")
+    fun selectCampaign(campaignId: String?) {
+        _selectedCampaignId.value = campaignId
+    }
 }

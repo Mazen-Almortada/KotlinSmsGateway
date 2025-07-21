@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import com.quansoft.smsgateway.R
 import com.quansoft.smsgateway.data.AppDatabase
 import com.quansoft.smsgateway.data.SettingsManager
+import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CoroutineScope
@@ -44,15 +45,19 @@ class GatewayService : Service() {
         }
     }
 
-    private var ktorServer: io.ktor.server.engine.ApplicationEngine? = null
+    private var ktorServer: ApplicationEngine? = null
 
     override fun onCreate() {
         super.onCreate()
         startForegroundService()
         scope.launch {
+            // Read port and auth token from settings before starting the server
             val port = settingsManager.serverPortFlow.first()
+            val authToken = settingsManager.authTokenFlow.first()
+
             ktorServer = embeddedServer(Netty, port = port, host = "0.0.0.0") {
-                configureRouting(database.smsDao())
+                // Pass all necessary dependencies to the routing configuration
+                configureRouting(database.smsDao(), database.bulkCampaignDao(), authToken)
             }.start(wait = false)
         }
         scope.launch {
@@ -63,7 +68,12 @@ class GatewayService : Service() {
             addAction("SMS_SENT")
             addAction("SMS_DELIVERED")
         }
-        ContextCompat.registerReceiver(this, smsStatusReceiver, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            smsStatusReceiver,
+            intentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
     }
 
