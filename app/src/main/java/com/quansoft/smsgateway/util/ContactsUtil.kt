@@ -2,8 +2,8 @@ package com.quansoft.smsgateway.util
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.provider.ContactsContract
 import android.net.Uri
+import android.provider.ContactsContract
 
 object ContactsUtil {
 

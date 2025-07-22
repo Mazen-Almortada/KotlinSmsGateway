@@ -1,28 +1,28 @@
-package com.quansoft.smsgateway.data
+package com.quansoft.smsgateway.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.quansoft.smsgateway.data.local.CampaignEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface BulkCampaignDao {
+interface CampaignDao {
     /**
      * Inserts a new campaign into the database. If a campaign with the same
      * ID already exists, it will be ignored.
      */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(campaign: BulkCampaign)
+    suspend fun insert(campaign: CampaignEntity)
 
     @Query("SELECT * FROM bulk_campaigns ORDER BY timestamp DESC")
-    fun getAllCampaigns(): Flow<List<BulkCampaign>>
+    fun getAllCampaigns(): Flow<List<CampaignEntity>>
 
     @Query("SELECT * FROM bulk_campaigns Where id = :id")
-    fun getCampaignByID(id: String): Flow<BulkCampaign>
+    fun getCampaignByID(id: String): Flow<CampaignEntity>
 
     // --- New Delete Function ---
-    @Delete
-    suspend fun delete(campaign: BulkCampaign)
+    @Query("DELETE FROM bulk_campaigns WHERE id = :campaignId")
+    suspend fun deleteCampaignById(campaignId: String)
 }

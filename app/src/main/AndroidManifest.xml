@@ -38,7 +38,7 @@
         </activity>
 
         <service
-            android:name=".service.GatewayService"
+            android:name=".service.SMSService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

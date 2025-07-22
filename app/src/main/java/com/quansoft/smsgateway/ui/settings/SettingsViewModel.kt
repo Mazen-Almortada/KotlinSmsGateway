@@ -5,7 +5,7 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.quansoft.smsgateway.data.SettingsManager
+import com.quansoft.smsgateway.data.repository.SettingsRepositoryImpl
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
@@ -18,24 +18,24 @@ import java.nio.ByteOrder
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val settingsManager = SettingsManager(application)
+    private val settingsRepository = SettingsRepositoryImpl(application)
 
-    val serverPort: StateFlow<Int> = settingsManager.serverPortFlow
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsManager.DEFAULT_PORT)
+    val serverPort: StateFlow<Int> = settingsRepository.getServerPort()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsRepositoryImpl.DEFAULT_PORT)
 
-    val authToken: StateFlow<String> = settingsManager.authTokenFlow
+    val authToken: StateFlow<String> = settingsRepository.getAuthToken()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Loading...")
 
     fun updateServerPort(port: String) {
         viewModelScope.launch {
-            val portNumber = port.toIntOrNull() ?: SettingsManager.DEFAULT_PORT
-            settingsManager.setServerPort(portNumber)
+            val portNumber = port.toIntOrNull() ?: SettingsRepositoryImpl.DEFAULT_PORT
+            settingsRepository.setServerPort(portNumber)
         }
     }
 
     fun regenerateToken() {
         viewModelScope.launch {
-            settingsManager.regenerateAuthToken()
+            settingsRepository.regenerateAuthToken()
         }
     }
 

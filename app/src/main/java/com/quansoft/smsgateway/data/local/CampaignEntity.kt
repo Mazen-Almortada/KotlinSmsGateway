@@ -1,4 +1,17 @@
 package com.quansoft.smsgateway.data.local
 
-class CampaignEntity {
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.quansoft.smsgateway.domain.model.Campaign
+
+@Entity(tableName = "bulk_campaigns")
+data class CampaignEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val timestamp: Long
+)
+
+// Mapper function
+fun CampaignEntity.toDomain(): Campaign {
+    return Campaign(id = this.id, name = this.name, timestamp = this.timestamp)
 }
