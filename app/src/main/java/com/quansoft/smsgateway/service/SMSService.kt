@@ -14,8 +14,8 @@ import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.quansoft.smsgateway.R
-import com.quansoft.smsgateway.data.AppDatabase
-import com.quansoft.smsgateway.data.SettingsManager
+import com.quansoft.smsgateway.data.local.AppDatabase
+import com.quansoft.smsgateway.data.repository.SettingsRepositoryImpl
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -32,7 +32,7 @@ class GatewayService : Service() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private val database by lazy { AppDatabase.getDatabase(this) }
-    private val settingsManager by lazy { SettingsManager(this) }
+    private val settingsManager by lazy { SettingsRepositoryImpl(this) }
 
     private val smsStatusReceiver = SmsStatusReceiver()
 
@@ -52,8 +52,8 @@ class GatewayService : Service() {
         startForegroundService()
         scope.launch {
             // Read port and auth token from settings before starting the server
-            val port = settingsManager.serverPortFlow.first()
-            val authToken = settingsManager.authTokenFlow.first()
+            val port = settingsManager.getServerPort().first()
+            val authToken = settingsManager.getAuthToken().first()
 
             ktorServer = embeddedServer(Netty, port = port, host = "0.0.0.0") {
                 // Pass all necessary dependencies to the routing configuration
