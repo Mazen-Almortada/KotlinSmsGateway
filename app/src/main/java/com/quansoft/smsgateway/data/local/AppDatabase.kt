@@ -1,4 +1,4 @@
-package com.quansoft.smsgateway.data
+package com.quansoft.smsgateway.data.local
 
 import android.content.Context
 import androidx.room.Database
@@ -7,15 +7,13 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.quansoft.smsgateway.data.local.dao.CampaignDao
 import com.quansoft.smsgateway.data.local.dao.SmsDao
-import com.quansoft.smsgateway.domain.model.Campaign
-import com.quansoft.smsgateway.domain.model.Message
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Database(
-    entities = [Message::class, Campaign::class],
+    entities = [SmsMessageEntity::class, CampaignEntity::class],
     version = 3,
     // Set exportSchema to false to resolve the build error.
     // This is acceptable during development. For production, you would
@@ -64,12 +62,12 @@ abstract class AppDatabase : RoomDatabase() {
 
         suspend fun populateDatabase(smsDao: SmsDao, campaignDao: CampaignDao) {
             // Add a couple of sample campaigns
-            val campaign1 = Campaign(
+            val campaign1 = CampaignEntity(
                 id = "promo-q1-2025",
                 name = "Q1 Promotions",
                 timestamp = System.currentTimeMillis()
             )
-            val campaign2 = Campaign(
+            val campaign2 = CampaignEntity(
                 id = "update-july-2025",
                 name = "July Updates",
                 timestamp = System.currentTimeMillis()
@@ -79,7 +77,7 @@ abstract class AppDatabase : RoomDatabase() {
 
             // Add some sample messages with different statuses
             val messages = listOf(
-                Message(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = "+15551234567",
                     content = "Check out our new Q1 deals! Big savings await.",
@@ -87,7 +85,7 @@ abstract class AppDatabase : RoomDatabase() {
                     timestamp = System.currentTimeMillis() - 120000,
                     bulkId = campaign1.id
                 ),
-                Message(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = "John Doe",
                     content = "Your account has a new security update for July. Please review.",
@@ -95,7 +93,7 @@ abstract class AppDatabase : RoomDatabase() {
                     timestamp = System.currentTimeMillis() - 60000,
                     bulkId = campaign2.id
                 ),
-                Message(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = "+15557654321",
                     content = "This is a standalone message that failed to send.",
@@ -103,15 +101,15 @@ abstract class AppDatabase : RoomDatabase() {
                     timestamp = System.currentTimeMillis() - 30000,
                     bulkId = null
                 ),
-                Message(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = "Jane Smith",
                     content = "Another promotional message for our Q1 event.",
-                    status = "queued",
+                    status = "sent",
                     timestamp = System.currentTimeMillis(),
                     bulkId = campaign1.id
                 ),
-                Message(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = "Service Alerts",
                     content = "We are performing system maintenance.",

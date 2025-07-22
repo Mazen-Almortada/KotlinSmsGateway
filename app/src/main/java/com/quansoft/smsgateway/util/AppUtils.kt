@@ -2,6 +2,8 @@ package com.quansoft.smsgateway.util
 
 import android.content.Context
 import android.content.pm.PackageInfo
+import android.text.format.DateUtils
+import androidx.compose.runtime.Composable
 
 object AppUtils {
     /**
@@ -15,5 +17,13 @@ object AppUtils {
             e.printStackTrace()
             "N/A"
         }
+    }
+    @Composable
+    fun formatTimestamp(timestamp: Long): String {
+        return DateUtils.getRelativeTimeSpanString(
+            timestamp,
+            System.currentTimeMillis(),
+            DateUtils.MINUTE_IN_MILLIS
+        ).toString()
     }
 }

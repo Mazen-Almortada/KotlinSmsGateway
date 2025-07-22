@@ -27,7 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class GatewayService : Service() {
+class SMSService : Service() {
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -100,7 +100,7 @@ class GatewayService : Service() {
 
 
         val sentIntent = Intent("SMS_SENT").apply {
-            `package` = this@GatewayService.packageName
+            `package` = this@SMSService.packageName
             putExtra("id", id)
         }
         val sentPendingIntent = PendingIntent.getBroadcast(
@@ -111,7 +111,7 @@ class GatewayService : Service() {
         )
 
         val deliveredIntent = Intent("SMS_DELIVERED").apply {
-            `package` = this@GatewayService.packageName
+            `package` = this@SMSService.packageName
             putExtra("id", id)
         }
         val deliveredPendingIntent = PendingIntent.getBroadcast(

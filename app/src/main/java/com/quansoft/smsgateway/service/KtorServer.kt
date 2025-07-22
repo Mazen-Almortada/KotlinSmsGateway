@@ -1,35 +1,34 @@
 package com.quansoft.smsgateway.service
 
-import android.os.Build
-import android.util.Log
-import com.quansoft.smsgateway.data.BulkCampaign
-import com.quansoft.smsgateway.data.SmsDao
-import com.quansoft.smsgateway.data.SmsMessage
+import com.quansoft.smsgateway.data.local.CampaignEntity
+import com.quansoft.smsgateway.data.local.SmsMessageEntity
+import com.quansoft.smsgateway.data.local.dao.CampaignDao
+import com.quansoft.smsgateway.data.local.dao.SmsDao
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.plugins.callloging.CallLogging
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.util.UUID
 import org.slf4j.event.Level
+import java.util.UUID
 
 @Serializable
 data class SendRequest(val to: String?, val message: String?, val messageID: String?)
 
-private const val TAG = "KtorServer"
 fun Application.configureRouting(
     smsDao: SmsDao,
-    bulkCampaignDao: com.quansoft.smsgateway.data.BulkCampaignDao,
+    campaignDao: CampaignDao,
+
     authToken: String
 ) {
 
@@ -74,16 +73,16 @@ fun Application.configureRouting(
 
             // 1. Create and insert the campaign information first.
             // The DAO is configured to ignore conflicts, so this is safe to call every time.
-            val newCampaign = BulkCampaign(
+            val newCampaign = CampaignEntity(
                 id = request.bulkId,
                 name = request.bulkName,
                 timestamp = System.currentTimeMillis()
             )
-            bulkCampaignDao.insert(newCampaign)
+            campaignDao.insert(newCampaign)
 
             // 2. Map the incoming messages to our SmsMessage entity, linking them by bulkId.
             val newMessages = request.messages.map { bulkMsg ->
-                SmsMessage(
+                SmsMessageEntity(
                     id = UUID.randomUUID().toString(),
                     recipient = bulkMsg.to,
                     content = bulkMsg.message,
@@ -125,7 +124,7 @@ fun Application.configureRouting(
                 return@post
             }
 
-            val message = SmsMessage(
+            val message = SmsMessageEntity(
                 id = uid,
                 recipient = to,
                 content = messageContent,
