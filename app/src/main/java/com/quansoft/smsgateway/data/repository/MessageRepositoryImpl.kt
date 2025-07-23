@@ -2,14 +2,12 @@ package com.quansoft.smsgateway.data.repository
 
 import com.quansoft.smsgateway.data.local.dao.SmsDao
 import com.quansoft.smsgateway.data.local.toDomain
-import com.quansoft.smsgateway.data.local.toEntity
 import com.quansoft.smsgateway.domain.model.Message
 import com.quansoft.smsgateway.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
-class MessageRepositoryImpl @Inject constructor(
+class MessageRepositoryImpl(
     private val smsDao: SmsDao,
 
 ) : MessageRepository {
@@ -22,13 +20,8 @@ class MessageRepositoryImpl @Inject constructor(
         smsDao.deleteMessageById(message.id)
     }
 
-
-    override suspend fun insert(message: Message) {
-        smsDao.insertMessage(message.toEntity())
-    }
-
-    override suspend fun insertAll(messages: List<Message>) {
-        smsDao.insertAll(messages.map { it.toEntity() })
+    override suspend fun delete(message: Message) {
+        smsDao.deleteMessageById(message.id)
     }
 
     override suspend fun deleteMessagesByCampaignId(id: String) {

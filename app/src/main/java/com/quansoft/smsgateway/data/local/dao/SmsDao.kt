@@ -28,9 +28,6 @@ interface SmsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(messages: List<SmsMessageEntity>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMessage(message: SmsMessageEntity)
-
     @Delete
     suspend fun delete(message: SmsMessageEntity)
 

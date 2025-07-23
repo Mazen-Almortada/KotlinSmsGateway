@@ -40,16 +40,3 @@ fun SmsMessageEntity.toDomain(): Message {
         bulkId = this.bulkId
     )
 }
-// This function converts the Domain model to a Data layer Entity.
-// It belongs here because the data layer is responsible for knowing
-// how to map to and from the domain.
-fun Message.toEntity(): SmsMessageEntity {
-    return SmsMessageEntity(
-        id = this.id,
-        recipient = this.recipient,
-        content = this.content,
-        status = this.status,
-        timestamp = this.timestamp,
-        bulkId = this.bulkId
-    )
-}

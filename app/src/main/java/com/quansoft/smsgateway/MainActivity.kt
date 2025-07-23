@@ -18,9 +18,7 @@ import com.quansoft.smsgateway.ui.info.InfoScreen
 import com.quansoft.smsgateway.ui.messages.GatewayScreen
 import com.quansoft.smsgateway.ui.settings.SettingsScreen
 import com.quansoft.smsgateway.ui.theme.Theme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
