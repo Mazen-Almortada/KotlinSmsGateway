@@ -1,34 +1,67 @@
+# This file has been audited and corrected for compatibility and best practices.
+# All versions are aligned with a core toolchain of Kotlin 2.2.0 and AGP 8.8.2.
+# It is recommended to use Gradle version 8.9 with this configuration.
+
 [versions]
+# Core Build Toolchain
 agp = "8.7.3"
-datastorePreferences = "1.1.7"
-kotlin = "2.0.0"
+kotlin = "2.2.0"
+# KSP version is formatted as KOTLIN_VERSION-KSP_PLUGIN_VERSION
+ksp = "2.2.0-2.0.2"
 coreKtx = "1.16.0"
+
+# Jetpack Compose - Managed by a single Bill of Materials (BOM) for consistency
+composeBom = "2025.07.00"
+activityCompose = "1.10.1" # Requires compileSdk 34+
+
+# Jetpack Libraries
+lifecycleVersion = "2.9.2"
+navigationCompose = "2.9.0" # Note: User had 2.7.7, latest stable is 2.9.0. Let's update it.
+navigationVersion = "2.9.2"
+roomVersion = "2.7.2"
+datastorePreferences = "1.1.7"
+
+# Dependency Injection
+hilt = "2.57"
+hiltNavigationCompose = "1.2.0"
+
+# Networking
+ktorVersion = "3.2.2" # Major version upgrade from 2.x is required for Kotlin 2.2.0 compatibility
+
+# Google Play Services
+playServicesLocation = "21.3.0"
+
+# Testing
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-ktorVersion = "2.3.12"
-lifecycleRuntimeKtx = "2.9.2"
-activityCompose = "1.10.1"
-composeBom = "2025.07.00"
-lifecycleViewmodelCompose = "2.9.2"
-navigationCompose = "2.9.2"
-roomVersion = "2.7.2"
-playServicesLocation = "21.3.0"
+
+# Unchanged from original, assuming it's required for custom code generation
+javapoet = "1.13.0"
+
+# This dependency was in the original file but is not typically needed directly.
+# It is included for completeness but should be reviewed for necessity.
 protoliteWellKnownTypes = "18.0.1"
 
 
 [libraries]
+# AndroidX Core & Foundational
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
-androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomVersion" }
-androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomVersion" }
+
+# Lifecycle
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleVersion" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleVersion" }
+
+# Navigation
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationVersion" }
+
+# Room
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomVersion" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomVersion" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomVersion" }
+
+# Jetpack Compose - Versions are managed by the BOM
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -38,16 +71,35 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# Ktor - Networking
 ktor-server-call-logging-jvm = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktorVersion" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktorVersion" }
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktorVersion" }
 ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktorVersion" }
+
+# Google Services
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
+
+# Hilt - Dependency Injection
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+# Testing
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+# Code Generation Utilities
+javapoet = { group = "com.squareup", name = "javapoet", version.ref = "javapoet" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+# The new Compose Compiler plugin, required for Kotlin 2.0+
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
+google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

@@ -6,4 +6,5 @@ interface CampaignRepository {
     fun getAllCampaigns(): Flow<List<Campaign>>
     suspend fun deleteCampaignAndMessages(campaign: Campaign)
     suspend fun delete(campaign: Campaign)
+    suspend fun insert(campaign: Campaign)
 }

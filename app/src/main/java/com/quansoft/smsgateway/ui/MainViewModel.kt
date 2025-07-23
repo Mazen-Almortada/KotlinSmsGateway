@@ -1,36 +1,29 @@
 package com.quansoft.smsgateway.ui
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quansoft.smsgateway.data.local.AppDatabase
-import com.quansoft.smsgateway.data.repository.CampaignRepositoryImpl
-import com.quansoft.smsgateway.data.repository.MessageRepositoryImpl
 import com.quansoft.smsgateway.domain.model.Campaign
 import com.quansoft.smsgateway.domain.model.MessageWithDetails
 import com.quansoft.smsgateway.domain.usecase.DeleteCampaignUseCase
 import com.quansoft.smsgateway.domain.usecase.DeleteMessageUseCase
 import com.quansoft.smsgateway.domain.usecase.GetCampaignsUseCase
 import com.quansoft.smsgateway.domain.usecase.GetFilteredMessagesUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    // Manual instantiation of dependencies (to be replaced by Hilt)
-    private val db = AppDatabase.getDatabase(application)
-    private val messageRepository = MessageRepositoryImpl(db.smsDao())
-    private val campaignRepository = CampaignRepositoryImpl(db.bulkCampaignDao(),db.smsDao())
-
-    private val getCampaignsUseCase = GetCampaignsUseCase(campaignRepository)
-    private val deleteCampaignUseCase = DeleteCampaignUseCase(campaignRepository, messageRepository)
-    private val deleteMessageUseCase = DeleteMessageUseCase(messageRepository)
-    private val getFilteredMessagesUseCase = GetFilteredMessagesUseCase(messageRepository, campaignRepository, application)
-    // --- End of Dependencies ---
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val getCampaignsUseCase: GetCampaignsUseCase,
+    private val deleteCampaignUseCase: DeleteCampaignUseCase,
+    private val deleteMessageUseCase: DeleteMessageUseCase,
+    private val getFilteredMessagesUseCase: GetFilteredMessagesUseCase
+) : ViewModel() {
 
 
     // --- UI State Holders ---
