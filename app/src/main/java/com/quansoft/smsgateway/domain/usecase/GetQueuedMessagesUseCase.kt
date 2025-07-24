@@ -4,13 +4,10 @@ import com.quansoft.smsgateway.domain.model.Message
 import com.quansoft.smsgateway.domain.repository.MessageRepository
 import javax.inject.Inject
 
-/**
- * A simple use case for deleting a single message.
- */
-class DeleteMessageUseCase @Inject constructor(
+class GetQueuedMessagesUseCase @Inject constructor(
     private val messageRepository: MessageRepository
 ) {
-    suspend operator fun invoke(message: Message) {
-        messageRepository.deleteMessage(message)
+    suspend operator fun invoke(): List<Message> {
+        return messageRepository.getQueuedMessages()
     }
 }

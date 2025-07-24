@@ -9,13 +9,16 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.quansoft.smsgateway.domain.repository.SettingsRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
-class SettingsRepositoryImpl(context: Context) : SettingsRepository {
+@Singleton
+class SettingsRepositoryImpl @Inject constructor(@ApplicationContext context: Context) : SettingsRepository {
     private val dataStore = context.dataStore
     companion object {
         val SERVER_PORT_KEY = intPreferencesKey("server_port")
@@ -66,4 +69,5 @@ class SettingsRepositoryImpl(context: Context) : SettingsRepository {
         }
         return initialToken
     }
+
 }

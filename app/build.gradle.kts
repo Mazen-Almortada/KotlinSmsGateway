@@ -3,8 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
+    // تطبيق الـ plugins التي تستخدم KSP
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
+
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
-    id("com.google.devtools.ksp") version "2.0.0-1.0.21"
 }
 
 android {
@@ -12,12 +15,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-            applicationId = "com.quansoft.smsgateway"
+        applicationId = "com.quansoft.smsgateway"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -46,7 +48,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -57,6 +58,7 @@ android {
 }
 
 dependencies {
+    // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -66,27 +68,28 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.navigation.compose)
 
-
-
+    // Hilt & Room (Both using KSP)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler) // Hilt is now using KSP
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler) // Room is using KSP
+    implementation(libs.androidx.hilt.navigation.compose)
+    // DataStore & Ktor
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.ktor.server.core.jvm)
     implementation(libs.ktor.server.netty.jvm)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.call.logging.jvm)
 
-
-
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.protolite.well.known.types)
-    ksp(libs.androidx.room.compiler)
-
+    // Other
     implementation(libs.play.services.location)
+    implementation(libs.protolite.well.known.types)
 
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

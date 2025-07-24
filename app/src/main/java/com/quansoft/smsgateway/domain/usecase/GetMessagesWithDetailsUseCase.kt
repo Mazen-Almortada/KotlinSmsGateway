@@ -7,8 +7,9 @@ import com.quansoft.smsgateway.domain.repository.MessageRepository
 import com.quansoft.smsgateway.util.ContactsUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import javax.inject.Inject
 
-class GetMessagesWithDetailsUseCase(
+class GetMessagesWithDetailsUseCase @Inject constructor(
     private val messageRepository: MessageRepository,
     private val campaignRepository: CampaignRepository,
     private val context: Context

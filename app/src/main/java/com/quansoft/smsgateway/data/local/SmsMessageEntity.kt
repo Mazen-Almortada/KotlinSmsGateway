@@ -29,6 +29,16 @@ data class SmsMessageEntity(
 
 }
 
+fun Message.toEntity(): SmsMessageEntity {
+    return SmsMessageEntity(
+        id = this.id,
+        recipient = this.recipient,
+        content = this.content,
+        status = this.status,
+        timestamp = this.timestamp,
+        bulkId = this.bulkId
+    )
+}
 // Mapper function to convert Entity to Domain model
 fun SmsMessageEntity.toDomain(): Message {
     return Message(

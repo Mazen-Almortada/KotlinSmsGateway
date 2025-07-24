@@ -2,15 +2,13 @@ package com.quansoft.smsgateway.domain.usecase
 
 import com.quansoft.smsgateway.domain.model.Message
 import com.quansoft.smsgateway.domain.repository.MessageRepository
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-/**
- * A simple use case for deleting a single message.
- */
-class DeleteMessageUseCase @Inject constructor(
+class GetMessagesUseCase @Inject constructor(
     private val messageRepository: MessageRepository
 ) {
-    suspend operator fun invoke(message: Message) {
-        messageRepository.deleteMessage(message)
+    operator fun invoke(): Flow<List<Message>> {
+        return messageRepository.getAllMessages()
     }
 }

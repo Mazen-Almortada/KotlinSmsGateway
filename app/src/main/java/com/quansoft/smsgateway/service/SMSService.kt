@@ -14,8 +14,12 @@ import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.quansoft.smsgateway.R
-import com.quansoft.smsgateway.data.local.AppDatabase
 import com.quansoft.smsgateway.data.repository.SettingsRepositoryImpl
+import com.quansoft.smsgateway.domain.usecase.GetQueuedMessagesUseCase
+import com.quansoft.smsgateway.domain.usecase.InsertCampaignUseCase
+import com.quansoft.smsgateway.domain.usecase.InsertMessageUseCase
+import com.quansoft.smsgateway.domain.usecase.UpdateMessageStatusUseCase
+import dagger.hilt.android.AndroidEntryPoint
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -26,12 +30,18 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class SMSService : Service() {
 
+    // ... (other injected dependencies like settingsRepository)
+    @Inject lateinit var getQueuedMessagesUseCase: GetQueuedMessagesUseCase
+    @Inject lateinit var insertMessageUseCase: InsertMessageUseCase
+    @Inject lateinit var insertCampaignUseCase: InsertCampaignUseCase
+    @Inject lateinit var updateMessageStatusUseCase: UpdateMessageStatusUseCase
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
-    private val database by lazy { AppDatabase.getDatabase(this) }
     private val settingsManager by lazy { SettingsRepositoryImpl(this) }
 
     private val smsStatusReceiver = SmsStatusReceiver()
@@ -57,7 +67,12 @@ class SMSService : Service() {
 
             ktorServer = embeddedServer(Netty, port = port, host = "0.0.0.0") {
                 // Pass all necessary dependencies to the routing configuration
-                configureRouting(database.smsDao(), database.bulkCampaignDao(), authToken)
+                configureRouting(
+                    getQueuedMessagesUseCase,
+                    insertCampaignUseCase,
+                    insertMessageUseCase,
+                    authToken
+                )
             }.start(wait = false)
         }
         scope.launch {
@@ -84,11 +99,11 @@ class SMSService : Service() {
 
     private suspend fun processSmsQueue() {
         while (true) {
-            val queuedMessages = database.smsDao().getQueuedMessages()
+            val queuedMessages = getQueuedMessagesUseCase()
             if (queuedMessages.isNotEmpty()) {
                 for (message in queuedMessages) {
                     sendSms(message.id, message.recipient, message.content)
-                    database.smsDao().updateStatus(message.id, "sending")
+                    updateMessageStatusUseCase(message.id, "sending")
                 }
             }
             delay(5000)

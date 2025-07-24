@@ -36,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "sms_gateway_database"
-                ).fallbackToDestructiveMigration(false)
+                ).fallbackToDestructiveMigration()
                     .addCallback(AppDatabaseCallback(CoroutineScope(SupervisorJob())))
                     .build()
                 INSTANCE = instance

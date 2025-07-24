@@ -12,24 +12,32 @@ import com.quansoft.smsgateway.domain.usecase.DeleteCampaignUseCase
 import com.quansoft.smsgateway.domain.usecase.DeleteMessageUseCase
 import com.quansoft.smsgateway.domain.usecase.GetCampaignsUseCase
 import com.quansoft.smsgateway.domain.usecase.GetFilteredMessagesUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    application: Application, // ستحتاجها UseCases حاليًا
+    getCampaignsUseCase: GetCampaignsUseCase,
+    private val deleteCampaignUseCase: DeleteCampaignUseCase,
+    private val deleteMessageUseCase: DeleteMessageUseCase,
+    getFilteredMessagesUseCase: GetFilteredMessagesUseCase
+) : AndroidViewModel(application) {
 
     // Manual instantiation of dependencies (to be replaced by Hilt)
-    private val db = AppDatabase.getDatabase(application)
-    private val messageRepository = MessageRepositoryImpl(db.smsDao())
-    private val campaignRepository = CampaignRepositoryImpl(db.bulkCampaignDao(),db.smsDao())
+//    private val db = AppDatabase.getDatabase(application)
+//    private val messageRepository = MessageRepositoryImpl(db.smsDao())
+//    private val campaignRepository = CampaignRepositoryImpl(db.bulkCampaignDao(),db.smsDao())
 
-    private val getCampaignsUseCase = GetCampaignsUseCase(campaignRepository)
-    private val deleteCampaignUseCase = DeleteCampaignUseCase(campaignRepository, messageRepository)
-    private val deleteMessageUseCase = DeleteMessageUseCase(messageRepository)
-    private val getFilteredMessagesUseCase = GetFilteredMessagesUseCase(messageRepository, campaignRepository, application)
+//    private val getCampaignsUseCase = GetCampaignsUseCase(campaignRepository)
+
+//    private val getFilteredMessagesUseCase = GetFilteredMessagesUseCase(messageRepository, campaignRepository)
     // --- End of Dependencies ---
 
 
