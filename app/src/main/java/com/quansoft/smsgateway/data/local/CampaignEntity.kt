@@ -15,3 +15,7 @@ data class CampaignEntity(
 fun CampaignEntity.toDomain(): Campaign {
     return Campaign(id = this.id, name = this.name, timestamp = this.timestamp)
 }
+
+fun Campaign.toEntity(): CampaignEntity {
+    return CampaignEntity(id = this.id, name = this.name, timestamp = this.timestamp)
+}

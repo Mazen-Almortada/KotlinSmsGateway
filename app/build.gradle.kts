@@ -76,7 +76,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler) // Room is using KSP
-
+    implementation(libs.androidx.hilt.navigation.compose)
     // DataStore & Ktor
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.ktor.server.core.jvm)

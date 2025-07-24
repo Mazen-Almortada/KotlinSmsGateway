@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.quansoft.smsgateway.data.local.CampaignEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -25,4 +26,16 @@ interface CampaignDao {
     // --- New Delete Function ---
     @Query("DELETE FROM bulk_campaigns WHERE id = :campaignId")
     suspend fun deleteCampaignById(campaignId: String)
+
+
+    @Query("DELETE FROM bulk_campaigns")
+    suspend fun deleteAllCampaigns()
+
+    @Query("UPDATE bulk_campaigns SET name = :name WHERE id = :id")
+    suspend fun updateCampaignName(id: String, name: String)
+
+    @Update
+    suspend fun update(campaign: CampaignEntity)
+
+
 }
