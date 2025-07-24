@@ -66,4 +66,8 @@ class SettingsRepositoryImpl(context: Context) : SettingsRepository {
         }
         return initialToken
     }
+
+    override suspend fun ipAddress(): String {
+        TODO("Not yet implemented")
+    }
 }

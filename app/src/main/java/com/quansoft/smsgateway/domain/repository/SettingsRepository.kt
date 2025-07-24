@@ -8,4 +8,6 @@ interface SettingsRepository {
     fun getAuthToken(): Flow<String>
     suspend fun regenerateAuthToken(): String
     suspend fun generateAndStoreInitialToken(): String
+    suspend fun ipAddress(): String
+
 }
